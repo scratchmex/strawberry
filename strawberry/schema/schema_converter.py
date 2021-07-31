@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 from inspect import isasyncgen, iscoroutine
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Type, Union
 
 
 # TypeGuard is only available in typing_extensions => 3.10, we don't want
@@ -300,7 +300,7 @@ class GraphQLCoreConverter:
             source: Any,
             info: Info,
             kwargs: Dict[str, Any],
-        ) -> Tuple[List[Any], Dict[str, Any]]:
+        ) -> Dict[str, Any]:
             kwargs = convert_arguments(
                 kwargs, field.arguments, auto_camel_case=self.config.auto_camel_case
             )
@@ -311,19 +311,14 @@ class GraphQLCoreConverter:
             # if it asks for root, the source it will be passed as kwarg
             # if it asks for info, the info will be passed as kwarg
 
-            args = []
-
             if field.base_resolver:
-                if field.base_resolver.has_self_arg:
-                    args.append(source)
-
                 if field.base_resolver.has_root_arg:
                     kwargs["root"] = source
 
                 if field.base_resolver.has_info_arg:
                     kwargs["info"] = info
 
-            return args, kwargs
+            return kwargs
 
         def _check_permissions(source: Any, info: Info, kwargs: Dict[str, Any]):
             """
@@ -354,13 +349,9 @@ class GraphQLCoreConverter:
             strawberry_info = _strawberry_info_from_graphql(info)
             _check_permissions(_source, strawberry_info, kwargs)
 
-            args, kwargs = _get_arguments(
-                source=_source, info=strawberry_info, kwargs=kwargs
-            )
+            kwargs = _get_arguments(source=_source, info=strawberry_info, kwargs=kwargs)
 
-            result = field.get_result(
-                _source, info=strawberry_info, args=args, kwargs=kwargs
-            )
+            result = field.get_result(_source, info=strawberry_info, arguments=kwargs)
 
             if isasyncgen(result):
 
