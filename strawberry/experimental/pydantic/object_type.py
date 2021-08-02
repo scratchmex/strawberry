@@ -73,48 +73,52 @@ def type(
         model_fields = model.__fields__
         fields_set = set(fields)
 
-        all_fields = [
-            (
-                name,
-                get_type_for_field(field),
-                StrawberryField(
-                    python_name=field.name,
-                    graphql_name=field.alias if field.has_alias else None,
-                    default=field.default if not field.required else UNSET,
-                    default_factory=(
-                        field.default_factory if field.default_factory else UNSET
-                    ),
-                    type_annotation=get_type_for_field(field),
+        all_fields = []
+        for field_name, field in model_fields.items():
+            if field_name not in fields_set:
+                continue
+
+            type_ = get_type_for_field(field)
+            field = StrawberryField(
+                python_name=field.name,
+                graphql_name=field.alias if field.has_alias else None,
+                default=field.default if not field.required else UNSET,
+                default_factory=(
+                    field.default_factory if field.default_factory else UNSET
                 ),
             )
-            for name, field in model_fields.items()
-            if name in fields_set
-        ]
+            field.type = type_
+            all_fields.append(
+                (
+                    field_name,
+                    type_,
+                    field,
+                )
+            )
 
         cls_annotations = getattr(cls, "__annotations__", {})
-        all_fields.extend(
-            (
-                (
-                    name,
-                    type_,
-                    StrawberryField(
-                        python_name=name,
-                        graphql_name=None,
-                        type_annotation=type_,
-                        # we need a default value when adding additional fields
-                        # on top of a type generated from Pydantic, this is because
-                        # Pydantic Optional fields always have None as default value
-                        # which breaks dataclasses generation; as we can't define
-                        # a field without a default value after one with a default value
-                        # adding fields at the beginning won't work as we will also
-                        # support default values on them (so the problem will be just
-                        # shifted around)
-                        default=None,
-                    ),
-                )
-                for name, type_ in cls_annotations.items()
+        for annotation_name, type_ in cls_annotations.items():
+            field = StrawberryField(
+                python_name=annotation_name,
+                graphql_name=None,
+                # we need a default value when adding additional fields
+                # on top of a type generated from Pydantic, this is because
+                # Pydantic Optional fields always have None as default value
+                # which breaks dataclasses generation; as we can't define
+                # a field without a default value after one with a default value
+                # adding fields at the beginning won't work as we will also
+                # support default values on them (so the problem will be just
+                # shifted around)
+                default=None,
             )
-        )
+            field.type = type_
+            all_fields.append(
+                (
+                    annotation_name,
+                    type_,
+                    field,
+                )
+            )
 
         cls = dataclasses.make_dataclass(
             cls.__name__,
