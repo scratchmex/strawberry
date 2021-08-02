@@ -298,7 +298,7 @@ class GraphQLCoreConverter:
         return graphql_object_type
 
     def from_resolver(
-        self, field: StrawberryField, return_type: object
+        self, field: StrawberryField, return_type: Union[StrawberryType, type]
     ) -> Callable:  # TODO: Take StrawberryResolver
         def _get_arguments(
             source: Any,
@@ -353,9 +353,13 @@ class GraphQLCoreConverter:
             strawberry_info = _strawberry_info_from_graphql(info)
             _check_permissions(_source, strawberry_info, kwargs)
 
-            kwargs = _get_arguments(source=_source, info=strawberry_info, kwargs=kwargs)
+            arguments = _get_arguments(
+                source=_source, info=strawberry_info, kwargs=kwargs
+            )
 
-            result = field.get_result(_source, info=strawberry_info, arguments=kwargs)
+            result = field.get_result(
+                _source, info=strawberry_info, arguments=arguments
+            )
 
             if isasyncgen(result):
 
