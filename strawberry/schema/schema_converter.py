@@ -129,7 +129,6 @@ class GraphQLCoreConverter:
         field_type: GraphQLType
 
         resolved_type = field.resolved_type
-        assert resolved_type
 
         if isinstance(resolved_type, StrawberryOptional):
             field_type = self.from_optional(resolved_type)
@@ -162,7 +161,6 @@ class GraphQLCoreConverter:
         field_type: GraphQLType
 
         resolved_type = field.resolved_type
-        assert resolved_type
 
         if isinstance(resolved_type, StrawberryOptional):
             field_type = self.from_optional(resolved_type)
