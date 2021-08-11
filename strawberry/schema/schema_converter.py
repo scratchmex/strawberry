@@ -71,10 +71,12 @@ class GraphQLCoreConverter:
     def from_argument(self, argument: StrawberryArgument) -> GraphQLArgument:
         argument_type: GraphQLType
 
-        if isinstance(argument.type, StrawberryOptional):
-            argument_type = self.from_optional(argument.type)
+        resolved_type = argument.resolved_type
+
+        if isinstance(resolved_type, StrawberryOptional):
+            argument_type = self.from_optional(resolved_type)
         else:
-            argument_type = self.from_non_optional(argument.type)
+            argument_type = self.from_non_optional(resolved_type)
 
         default_value = Undefined if argument.default is UNSET else argument.default
 
@@ -127,6 +129,7 @@ class GraphQLCoreConverter:
         field_type: GraphQLType
 
         resolved_type = field.resolved_type
+        assert resolved_type
 
         if isinstance(resolved_type, StrawberryOptional):
             field_type = self.from_optional(resolved_type)
@@ -159,6 +162,7 @@ class GraphQLCoreConverter:
         field_type: GraphQLType
 
         resolved_type = field.resolved_type
+        assert resolved_type
 
         if isinstance(resolved_type, StrawberryOptional):
             field_type = self.from_optional(resolved_type)
